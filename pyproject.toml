@@ -3,17 +3,52 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "codenav"
-version = "0.1.0"
-description = "AI coding-agent tool: semantic class index for C# codebases"
+name = "codenavigator"
+version = "1.0.0"
+description = "AI coding-agent tool: SQLite FTS5 semantic class index for C# codebases."
+readme = "README.md"
 requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [
+    { name = "jc.jeong" }
+]
+keywords = [
+    "csharp",
+    "code-search",
+    "fts5",
+    "indexing",
+    "claude-code",
+    "ai-coding-agent",
+    "semantic-search",
+]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Environment :: Console",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Software Development :: Libraries",
+    "Topic :: Text Processing :: Indexing",
+]
 dependencies = []
+
+[project.urls]
+Homepage = "https://github.com/JaeCheon8587/codenavigator"
+Repository = "https://github.com/JaeCheon8587/codenavigator"
+Issues = "https://github.com/JaeCheon8587/codenavigator/issues"
+Changelog = "https://github.com/JaeCheon8587/codenavigator/blob/main/CHANGELOG.md"
 
 [project.scripts]
 codenav = "codenav.__main__:main"
 
 [project.optional-dependencies]
-dev = ["pytest>=8"]
+dev = ["pytest>=8", "build", "twine"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]

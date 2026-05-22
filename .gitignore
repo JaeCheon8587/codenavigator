@@ -1,8 +1,20 @@
 .codenav/
 __pycache__/
 *.pyc
+*.pyo
 *.egg-info/
 dist/
 build/
+.pytest_cache/
 .venv/
-*.pyo
+venv/
+.coverage
+htmlcov/
+.tox/
+.mypy_cache/
+.ruff_cache/
+
+# Local debug artifacts
+_inspect.py
+_dbg.py
+_debug_*.py

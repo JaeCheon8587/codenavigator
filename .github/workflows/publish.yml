@@ -1,0 +1,56 @@
+name: Publish to PyPI
+
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: pypi
+      url: https://pypi.org/project/codenavigator/
+    permissions:
+      id-token: write  # trusted publishing (OIDC)
+      contents: read
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install build tooling
+        run: |
+          python -m pip install --upgrade pip
+          pip install build twine
+
+      - name: Run tests
+        run: |
+          pip install -e ".[dev]"
+          python -m pytest tests/
+
+      - name: Verify tag matches pyproject version
+        run: |
+          tag="${GITHUB_REF##*/v}"
+          file_version=$(python -c "import tomllib,pathlib; print(tomllib.loads(pathlib.Path('pyproject.toml').read_text())['project']['version'])")
+          if [ "$tag" != "$file_version" ]; then
+            echo "Tag v$tag does not match pyproject version $file_version" >&2
+            exit 1
+          fi
+        shell: bash
+
+      - name: Build sdist + wheel
+        run: python -m build
+
+      - name: Verify dist
+        run: |
+          ls -la dist/
+          twine check dist/*
+
+      - name: Publish to PyPI (trusted publishing)
+        uses: pypa/gh-action-pypi-publish@release/v1

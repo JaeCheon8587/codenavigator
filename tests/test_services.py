@@ -120,6 +120,41 @@ def test_create_manual_entry_stores_relative_paths(tmp_path):
     assert entry["folder"] == str(Path("Src") / "Proj")
 
 
+def test_codenavignore_excludes_directories(tmp_path):
+    """`.codenavignore` 가 `dir/` 패턴으로 트리를 제외한다."""
+    keep = _write_project(tmp_path, "Sample.Keep", "Kept")
+    tools_proj = tmp_path / "tools" / "CodeNavigator" / "sample" / "src"
+    tools_proj.mkdir(parents=True)
+    (tools_proj / "Vendor.cs").write_text(
+        "namespace V; public class Vendor { }", encoding="utf-8"
+    )
+    (tmp_path / ".codenavignore").write_text("tools/\n", encoding="utf-8")
+
+    files = services.collect_cs_files(tmp_path)
+    rels = {f.resolve().relative_to(tmp_path.resolve()).as_posix() for f in files}
+    assert any("Kept.cs" in r for r in rels)
+    assert not any("Vendor.cs" in r for r in rels)
+
+
+def test_codenavignore_glob_patterns(tmp_path):
+    keep = _write_project(tmp_path, "Sample.Keep", "Kept")
+    extra = tmp_path / "Generated" / "AutoGen.cs"
+    extra.parent.mkdir(parents=True)
+    extra.write_text("namespace G; public class AutoGen { }", encoding="utf-8")
+    (tmp_path / ".codenavignore").write_text("# comment\n*AutoGen*\n", encoding="utf-8")
+
+    files = services.collect_cs_files(tmp_path)
+    names = {f.name for f in files}
+    assert "Kept.cs" in names
+    assert "AutoGen.cs" not in names
+
+
+def test_codenavignore_missing_is_noop(tmp_path):
+    _write_project(tmp_path, "Sample.Keep", "Kept")
+    files = services.collect_cs_files(tmp_path)
+    assert any(f.name == "Kept.cs" for f in files)
+
+
 def test_reindex_no_ai_skips_enrichment_and_avoids_stale(tmp_path, monkeypatch):
     """no_ai=True: parser-only path. AI 호출 0, stale 마킹 없음, frontmatter/XML 채워짐."""
     project = tmp_path / "Src" / "Mirero.PCC.XLab"

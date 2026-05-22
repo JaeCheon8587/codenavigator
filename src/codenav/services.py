@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import fnmatch
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -22,14 +23,64 @@ _EXCLUDE_DIRS = {
     "TestResults",
 }
 
+_IGNORE_FILENAME = ".codenavignore"
+
+
+def _load_ignore_patterns(root: Path) -> list[str]:
+    """Load extra path patterns from `<root>/.codenavignore` if present.
+
+    Each non-blank, non-comment line is a glob pattern matched against the
+    file path relative to the root (forward-slash form). A trailing `/`
+    treats the pattern as a directory prefix.
+    """
+    ignore_file = root / _IGNORE_FILENAME
+    if not ignore_file.exists():
+        return []
+    patterns: list[str] = []
+    try:
+        for raw in ignore_file.read_text(encoding="utf-8", errors="replace").splitlines():
+            line = raw.strip()
+            if not line or line.startswith("#"):
+                continue
+            patterns.append(line)
+    except OSError:
+        return []
+    return patterns
+
+
+def _matches_ignore(rel_path_str: str, patterns: list[str]) -> bool:
+    if not patterns:
+        return False
+    for pattern in patterns:
+        if pattern.endswith("/"):
+            prefix = pattern.rstrip("/")
+            if rel_path_str == prefix or rel_path_str.startswith(prefix + "/"):
+                return True
+        elif fnmatch.fnmatch(rel_path_str, pattern):
+            return True
+        elif "/" not in pattern and any(
+            fnmatch.fnmatch(segment, pattern) for segment in rel_path_str.split("/")
+        ):
+            return True
+    return False
+
 
 def collect_cs_files(root: Path) -> list[Path]:
+    root_resolved = root.resolve()
+    ignore_patterns = _load_ignore_patterns(root_resolved)
     results = []
     for path in root.rglob("*.cs"):
         if any(part in _EXCLUDE_DIRS for part in path.parts):
             continue
         if path.name.endswith((".g.cs", ".AssemblyAttributes.cs", ".AssemblyInfo.cs")):
             continue
+        if ignore_patterns:
+            try:
+                rel = path.resolve().relative_to(root_resolved).as_posix()
+            except ValueError:
+                rel = path.as_posix()
+            if _matches_ignore(rel, ignore_patterns):
+                continue
         results.append(path)
     return results
 

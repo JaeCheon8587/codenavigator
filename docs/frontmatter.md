@@ -1,17 +1,12 @@
-# CodeNavigator-FRONTMATTER — In-Source Frontmatter 양식
+# Frontmatter 양식 (In-Source `// ---` YAML 블록)
 
-> 본 문서는 C# 클래스 description/tags 메타데이터를 소스 코드 안에 작성하기 위한 주석 양식 규약. CodeNavigator parser(`tools/CodeNavigator/src/codenav/parser_cs.py`)가 본 양식을 읽어 SQLite 인덱스의 `description`·`tags` 컬럼을 채운다.
-
-| 항목 | 값 |
-|---|---|
-| 문서 ID | CodeNavigator-FRONTMATTER |
-| 버전 | 0.1 (Draft) |
-| 관련 문서 | [CodeNavigator-PRD](CodeNavigator-PRD.md) · [CodeNavigator-FC](CodeNavigator-FC.md) · [CodeNavigator-ARCHITECTURE](CodeNavigator-ARCHITECTURE.md) |
+> C# 클래스 description/tags 메타데이터를 소스 코드 안에 작성하기 위한 주석 양식 규약. codenavigator parser(`src/codenav/parser_cs.py`)가 본 양식을 읽어 SQLite 인덱스의 `description`·`tags` 컬럼을 채운다.
 
 ## 변경 이력
-| 버전 | 일자 | 변경 요약 | 작성자 |
-|---|---|---|---|
-| 0.1 | 2026-05-22 | 초안 — `// ---` YAML 블록 frontmatter 규약 정의 | 정재천 |
+| 버전 | 일자 | 변경 요약 |
+|---|---|---|
+| 0.1 | 2026-05-22 | 초안 — `// ---` YAML 블록 frontmatter 규약 정의 |
+| 0.2 | 2026-05-22 | 독립 repo 분리에 맞춰 모노레포 SSOT 링크 제거 |
 
 ---
 
