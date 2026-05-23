@@ -100,6 +100,11 @@ def cmd_delete(args: argparse.Namespace) -> int:
 
 def cmd_frontmatter_gen(args: argparse.Namespace) -> int:
     root = Path(args.root) if args.root else Path.cwd()
+    projects: list[str] | None = None
+    if getattr(args, "projects", None):
+        projects = [p.strip() for p in args.projects.split(",") if p.strip()]
+        if not projects:
+            projects = None
     try:
         result = frontmatter_gen.run(
             root,
@@ -107,6 +112,7 @@ def cmd_frontmatter_gen(args: argparse.Namespace) -> int:
             apply=args.apply,
             allow_dirty=args.allow_dirty,
             verbose=args.verbose,
+            projects=projects,
         )
     except RuntimeError as exc:
         print(f"[codenav] {exc}", file=sys.stderr)
@@ -171,6 +177,11 @@ def main() -> None:
     fp_gen.add_argument("--limit", type=int, default=50, help="Max classes per invocation (default: 50)")
     fp_gen.add_argument("--apply", action="store_true", help="Write changes (default: dry-run)")
     fp_gen.add_argument("--allow-dirty", action="store_true", help="Run even if git working tree is dirty")
+    fp_gen.add_argument(
+        "--projects",
+        metavar="CSV",
+        help="Comma-separated .csproj filenames to scope frontmatter generation (e.g. 'Foo.csproj,Bar.csproj'). Only .cs under matching csproj folders are considered.",
+    )
     fp_gen.add_argument("--verbose", action="store_true")
 
     args = parser.parse_args()

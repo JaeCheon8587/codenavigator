@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.3 — 2026-05-23
+
+- feat(frontmatter-gen): `--projects` CSV flag scopes generation to specified `.csproj` projects. Matches `.csproj` filenames case-insensitively across the repo via rglob; only `.cs` under matching csproj folders become candidates. Missing csproj names are warned on stderr. Suffix `.csproj` optional in input. 4 new pytest cases.
+
 ## v1.0.2 — 2026-05-23
 
 - fix(tests): use `pathlib.Path` to build expected relative file path in `test_dashboard_shows_relative_file_path` so Linux CI (forward slash) and Windows local (backslash) both pass. v1.0.1 publish workflow blocked on this single assertion.

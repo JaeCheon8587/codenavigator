@@ -73,10 +73,47 @@ class GenResult:
     failures: list[str] = field(default_factory=list)
 
 
-def collect_targets(root: Path, limit: int) -> list[Target]:
-    """Find classes lacking both XML doc and existing frontmatter, up to limit."""
+def _resolve_project_dirs(root: Path, projects: list[str]) -> tuple[list[Path], list[str]]:
+    """Resolve .csproj filenames to their containing folders.
+
+    Returns (matched_dirs, missing_names). matched_dirs are absolute paths whose
+    subtrees should be scanned. missing_names are csproj filenames with no match.
+    """
+    csproj_files = list(root.rglob("*.csproj"))
+    matched_dirs: list[Path] = []
+    missing: list[str] = []
+    for name in projects:
+        target = name if name.lower().endswith(".csproj") else f"{name}.csproj"
+        hits = [p for p in csproj_files if p.name.lower() == target.lower()]
+        if not hits:
+            missing.append(target)
+            continue
+        for hit in hits:
+            matched_dirs.append(hit.parent.resolve())
+    return matched_dirs, missing
+
+
+def collect_targets(
+    root: Path, limit: int, projects: list[str] | None = None
+) -> list[Target]:
+    """Find classes lacking both XML doc and existing frontmatter, up to limit.
+
+    When `projects` is given, only .cs files under matching .csproj directories
+    are considered. .csproj filenames are matched case-insensitively.
+    """
     targets: list[Target] = []
-    cs_files = sorted(root.rglob("*.cs"))
+    if projects:
+        scan_dirs, missing = _resolve_project_dirs(root, projects)
+        for name in missing:
+            print(f"[WARN] csproj not found: {name}", file=sys.stderr)
+        if not scan_dirs:
+            return targets
+        cs_files: list[Path] = []
+        for d in scan_dirs:
+            cs_files.extend(d.rglob("*.cs"))
+        cs_files = sorted(set(cs_files))
+    else:
+        cs_files = sorted(root.rglob("*.cs"))
     for path in cs_files:
         if len(targets) >= limit:
             break
@@ -293,6 +330,7 @@ def run(
     apply: bool = False,
     allow_dirty: bool = False,
     verbose: bool = False,
+    projects: list[str] | None = None,
 ) -> GenResult:
     """Top-level orchestration entry point."""
     root = root.resolve()
@@ -303,7 +341,7 @@ def run(
             "git working tree is dirty. Commit/stash first or pass --allow-dirty."
         )
 
-    targets = collect_targets(root, limit)
+    targets = collect_targets(root, limit, projects=projects)
     result.candidates = len(targets)
     seen_files = {t.file for t in targets}
     result.scanned_files = len(seen_files)

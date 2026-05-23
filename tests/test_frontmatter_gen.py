@@ -256,3 +256,81 @@ def test_run_ai_failure_yields_no_writes(tmp_repo, monkeypatch):
     result = frontmatter_gen.run(tmp_repo, limit=10, apply=True, allow_dirty=True)
     assert result.written == 0
     assert len(result.failures) == 1
+
+
+def test_collect_targets_projects_filter_matches_csproj(tmp_repo):
+    _write(tmp_repo / "ProjA" / "ProjA.csproj", "<Project></Project>")
+    _write(tmp_repo / "ProjA" / "ClassA.cs", """
+        namespace ProjA {
+            public class ClassA { }
+        }
+        """)
+    _write(tmp_repo / "ProjB" / "ProjB.csproj", "<Project></Project>")
+    _write(tmp_repo / "ProjB" / "ClassB.cs", """
+        namespace ProjB {
+            public class ClassB { }
+        }
+        """)
+
+    targets = frontmatter_gen.collect_targets(
+        tmp_repo, limit=50, projects=["ProjA.csproj"]
+    )
+    names = {t.class_name for t in targets}
+    assert names == {"ClassA"}
+
+
+def test_collect_targets_projects_filter_case_insensitive_and_csv_multiple(tmp_repo):
+    _write(tmp_repo / "Alpha" / "Alpha.csproj", "<Project></Project>")
+    _write(tmp_repo / "Alpha" / "AlphaCls.cs", """
+        namespace Alpha {
+            public class AlphaCls { }
+        }
+        """)
+    _write(tmp_repo / "Beta" / "Beta.csproj", "<Project></Project>")
+    _write(tmp_repo / "Beta" / "BetaCls.cs", """
+        namespace Beta {
+            public class BetaCls { }
+        }
+        """)
+    _write(tmp_repo / "Gamma" / "Gamma.csproj", "<Project></Project>")
+    _write(tmp_repo / "Gamma" / "GammaCls.cs", """
+        namespace Gamma {
+            public class GammaCls { }
+        }
+        """)
+
+    targets = frontmatter_gen.collect_targets(
+        tmp_repo, limit=50, projects=["alpha.csproj", "BETA.CSPROJ"]
+    )
+    names = {t.class_name for t in targets}
+    assert names == {"AlphaCls", "BetaCls"}
+
+
+def test_collect_targets_projects_no_match_returns_empty(tmp_repo, capsys):
+    _write(tmp_repo / "OnlyA" / "OnlyA.csproj", "<Project></Project>")
+    _write(tmp_repo / "OnlyA" / "A.cs", """
+        namespace OnlyA {
+            public class A { }
+        }
+        """)
+    targets = frontmatter_gen.collect_targets(
+        tmp_repo, limit=50, projects=["Missing.csproj"]
+    )
+    assert targets == []
+    err = capsys.readouterr().err
+    assert "Missing.csproj" in err
+
+
+def test_collect_targets_projects_accepts_name_without_csproj_suffix(tmp_repo):
+    _write(tmp_repo / "Foo" / "Foo.csproj", "<Project></Project>")
+    _write(tmp_repo / "Foo" / "FooCls.cs", """
+        namespace Foo {
+            public class FooCls { }
+        }
+        """)
+
+    targets = frontmatter_gen.collect_targets(
+        tmp_repo, limit=50, projects=["Foo"]
+    )
+    names = {t.class_name for t in targets}
+    assert names == {"FooCls"}
