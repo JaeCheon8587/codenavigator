@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.1 — 2026-05-23
+
+- README: per-project venv install pattern documented (`Tools/codenavigator/` layout + `codenav.ps1` launcher).
+- No code changes.
+
 ## v1.0.0 — 2026-05-22
 
 First independent release. Split out of the `Claudecode-For-Me` monorepo into a standalone Python package on PyPI.

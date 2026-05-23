@@ -6,11 +6,34 @@ Natural-language keyword search across C# `class` / `struct` / `interface` / `re
 
 ## Install
 
+### Global (simple)
+
 ```bash
 pip install codenavigator
 ```
 
 Registers a `codenav` CLI on PATH. Python 3.11+.
+
+### Per-project venv (isolated, recommended for projects with their own `Tools/` layout)
+
+```bash
+cd <your-project>
+python -m venv Tools/codenavigator
+Tools/codenavigator/Scripts/pip install codenavigator   # Windows
+# Tools/codenavigator/bin/pip install codenavigator     # Unix
+
+# Optional launcher at project root (PowerShell):
+#   codenav.ps1
+#     & "$PSScriptRoot\Tools\codenavigator\Scripts\codenav.exe" @Args
+```
+
+Add to `.gitignore`:
+
+```
+Tools/codenavigator/
+```
+
+This keeps the venv (binary + dependencies) out of git while letting the launcher script ship with the repo.
 
 ## Quickstart
 
