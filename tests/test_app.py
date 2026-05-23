@@ -85,7 +85,8 @@ def test_dashboard_shows_relative_file_path(tmp_path):
     status, _, response = _request(app, "/")
 
     assert status.startswith("200")
-    assert "Src\\Project\\ClassA.cs" in response
+    relative = str(Path("Src") / "Project" / "ClassA.cs")
+    assert relative in response
     assert str(source.resolve()) not in response
 
 

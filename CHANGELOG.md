@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.2 — 2026-05-23
+
+- fix(tests): use `pathlib.Path` to build expected relative file path in `test_dashboard_shows_relative_file_path` so Linux CI (forward slash) and Windows local (backslash) both pass. v1.0.1 publish workflow blocked on this single assertion.
+
 ## v1.0.1 — 2026-05-23
 
 - README: per-project venv install pattern documented (`Tools/codenavigator/` layout + `codenav.ps1` launcher).
