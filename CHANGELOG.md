@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.5 — 2026-05-23
+
+- feat(frontmatter): `codenav frontmatter check` — AI-free static validation. Flags missing frontmatter (WARN), empty description, malformed `tags:`, unterminated `// ---` blocks (FAIL). Supports `--staged` (git index), `--files`, `--strict` (exit 1 on WARN).
+- feat(frontmatter): `codenav frontmatter install-hook` — installs/appends `.git/hooks/pre-commit` block that runs `frontmatter check --staged`. Idempotent via sentinel markers. Coexists with other pre-commit content. `--uninstall` removes the block; `--force` replaces. Bypass at commit time with `git commit --no-verify`.
+- 21 new pytest cases.
+
 ## v1.0.4 — 2026-05-23
 
 - change(frontmatter-gen): `--limit` default is now `0` = unlimited (was `50`). Cap classes per invocation only when user explicitly passes `--limit N`. 2 new pytest cases.

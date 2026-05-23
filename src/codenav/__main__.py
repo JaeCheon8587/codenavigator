@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from codenav import services, app as web_app, frontmatter_gen
+from codenav import services, app as web_app, frontmatter_gen, frontmatter_check, hook_install
 
 
 def cmd_status(args: argparse.Namespace) -> int:
@@ -139,6 +139,39 @@ def cmd_ui(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_frontmatter_check(args: argparse.Namespace) -> int:
+    root = Path(args.root) if args.root else Path.cwd()
+    issues, code = frontmatter_check.run(
+        root,
+        staged=args.staged,
+        files=args.files,
+        strict=args.strict,
+    )
+    fails = [i for i in issues if i.level == "FAIL"]
+    warns = [i for i in issues if i.level == "WARN"]
+    for i in issues:
+        print(frontmatter_check.format_issue(i), file=sys.stderr)
+    print(
+        f"[check] files={len({i.file for i in issues})} warn={len(warns)} fail={len(fails)}",
+        file=sys.stderr,
+    )
+    return code
+
+
+def cmd_install_hook(args: argparse.Namespace) -> int:
+    root = Path(args.root) if args.root else Path.cwd()
+    try:
+        if args.uninstall:
+            status = hook_install.uninstall(root)
+        else:
+            status = hook_install.install(root, force=args.force)
+    except RuntimeError as exc:
+        print(f"[codenav] {exc}", file=sys.stderr)
+        return 1
+    print(f"[install-hook] {status}", file=sys.stderr)
+    return 0
+
+
 def main() -> None:
     sys.stdout.reconfigure(encoding="utf-8")
     parser = argparse.ArgumentParser(prog="codenav", description="CodeNavigator CLI")
@@ -184,14 +217,30 @@ def main() -> None:
     )
     fp_gen.add_argument("--verbose", action="store_true")
 
+    fp_check = fp_sub.add_parser("check", help="Validate `// ---` frontmatter syntax (no AI)")
+    fp_check.add_argument("--staged", action="store_true", help="Validate git-staged .cs files")
+    fp_check.add_argument("--files", nargs="+", metavar="FILE", help="Explicit file list")
+    fp_check.add_argument("--strict", action="store_true", help="Exit 1 on WARN too (default: only FAIL)")
+
+    fp_hook = fp_sub.add_parser("install-hook", help="Install/append pre-commit hook for frontmatter check")
+    fp_hook.add_argument("--force", action="store_true", help="Replace existing codenav hook block")
+    fp_hook.add_argument("--uninstall", action="store_true", help="Remove codenav hook block")
+
     args = parser.parse_args()
+    if args.cmd == "frontmatter":
+        if args.fm_cmd == "gen":
+            sys.exit(cmd_frontmatter_gen(args))
+        if args.fm_cmd == "check":
+            sys.exit(cmd_frontmatter_check(args))
+        if args.fm_cmd == "install-hook":
+            sys.exit(cmd_install_hook(args))
+        parser.error(f"unknown frontmatter subcommand: {args.fm_cmd}")
     dispatch = {
         "status": cmd_status,
         "search": cmd_search,
         "reindex": cmd_reindex,
         "delete": cmd_delete,
         "ui": cmd_ui,
-        "frontmatter": cmd_frontmatter_gen,
     }
     sys.exit(dispatch[args.cmd](args))
 
