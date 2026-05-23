@@ -1,5 +1,9 @@
 # Changelog
 
+## v1.0.4 — 2026-05-23
+
+- change(frontmatter-gen): `--limit` default is now `0` = unlimited (was `50`). Cap classes per invocation only when user explicitly passes `--limit N`. 2 new pytest cases.
+
 ## v1.0.3 — 2026-05-23
 
 - feat(frontmatter-gen): `--projects` CSV flag scopes generation to specified `.csproj` projects. Matches `.csproj` filenames case-insensitively across the repo via rglob; only `.cs` under matching csproj folders become candidates. Missing csproj names are warned on stderr. Suffix `.csproj` optional in input. 4 new pytest cases.

@@ -334,3 +334,26 @@ def test_collect_targets_projects_accepts_name_without_csproj_suffix(tmp_repo):
     )
     names = {t.class_name for t in targets}
     assert names == {"FooCls"}
+
+
+def test_collect_targets_limit_zero_is_unlimited(tmp_repo):
+    for n in ["A", "B", "C", "D", "E"]:
+        _write(tmp_repo / f"{n}.cs", f"""
+            namespace N {{
+                public class Cls{n} {{ }}
+            }}
+            """)
+    targets = frontmatter_gen.collect_targets(tmp_repo, limit=0)
+    names = {t.class_name for t in targets}
+    assert names == {"ClsA", "ClsB", "ClsC", "ClsD", "ClsE"}
+
+
+def test_collect_targets_default_limit_is_unlimited(tmp_repo):
+    for n in ["A", "B", "C"]:
+        _write(tmp_repo / f"{n}.cs", f"""
+            namespace N {{
+                public class Cls{n} {{ }}
+            }}
+            """)
+    targets = frontmatter_gen.collect_targets(tmp_repo)
+    assert len(targets) == 3

@@ -94,14 +94,16 @@ def _resolve_project_dirs(root: Path, projects: list[str]) -> tuple[list[Path], 
 
 
 def collect_targets(
-    root: Path, limit: int, projects: list[str] | None = None
+    root: Path, limit: int = 0, projects: list[str] | None = None
 ) -> list[Target]:
     """Find classes lacking both XML doc and existing frontmatter, up to limit.
 
+    `limit=0` (default) means unlimited — process every matching class.
     When `projects` is given, only .cs files under matching .csproj directories
     are considered. .csproj filenames are matched case-insensitively.
     """
     targets: list[Target] = []
+    unlimited = limit <= 0
     if projects:
         scan_dirs, missing = _resolve_project_dirs(root, projects)
         for name in missing:
@@ -115,7 +117,7 @@ def collect_targets(
     else:
         cs_files = sorted(root.rglob("*.cs"))
     for path in cs_files:
-        if len(targets) >= limit:
+        if not unlimited and len(targets) >= limit:
             break
         try:
             text = path.read_text(encoding="utf-8-sig", errors="replace")
@@ -136,7 +138,7 @@ def collect_targets(
         if not classes:
             continue
         for cls in classes:
-            if len(targets) >= limit:
+            if not unlimited and len(targets) >= limit:
                 break
             if cls.class_name in existing_frontmatter or cls.class_name in existing_xml:
                 continue
@@ -326,7 +328,7 @@ def is_git_clean(root: Path) -> bool:
 def run(
     root: Path,
     *,
-    limit: int = 50,
+    limit: int = 0,
     apply: bool = False,
     allow_dirty: bool = False,
     verbose: bool = False,

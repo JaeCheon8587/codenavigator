@@ -174,7 +174,7 @@ def main() -> None:
     fp = sub.add_parser("frontmatter", help="Frontmatter operations")
     fp_sub = fp.add_subparsers(dest="fm_cmd", required=True)
     fp_gen = fp_sub.add_parser("gen", help="AI-generate `// ---` blocks for classes lacking description")
-    fp_gen.add_argument("--limit", type=int, default=50, help="Max classes per invocation (default: 50)")
+    fp_gen.add_argument("--limit", type=int, default=0, help="Max classes per invocation (default: 0 = unlimited)")
     fp_gen.add_argument("--apply", action="store_true", help="Write changes (default: dry-run)")
     fp_gen.add_argument("--allow-dirty", action="store_true", help="Run even if git working tree is dirty")
     fp_gen.add_argument(
