@@ -94,17 +94,25 @@ def _resolve_project_dirs(root: Path, projects: list[str]) -> tuple[list[Path], 
 
 
 def collect_targets(
-    root: Path, limit: int = 0, projects: list[str] | None = None
+    root: Path,
+    limit: int = 0,
+    projects: list[str] | None = None,
+    files: list[Path] | None = None,
 ) -> list[Target]:
     """Find classes lacking both XML doc and existing frontmatter, up to limit.
 
     `limit=0` (default) means unlimited — process every matching class.
-    When `projects` is given, only .cs files under matching .csproj directories
-    are considered. .csproj filenames are matched case-insensitively.
+    Scope (mutually constraining):
+      - `files`: explicit list of .cs paths. Most specific.
+      - `projects`: list of .csproj filenames (case-insensitive).
+      - neither: full repo scan.
+    When `files` is given, `projects` is ignored.
     """
     targets: list[Target] = []
     unlimited = limit <= 0
-    if projects:
+    if files:
+        cs_files = sorted({Path(f).resolve() for f in files if Path(f).suffix == ".cs" and Path(f).exists()})
+    elif projects:
         scan_dirs, missing = _resolve_project_dirs(root, projects)
         for name in missing:
             print(f"[WARN] csproj not found: {name}", file=sys.stderr)
@@ -333,6 +341,7 @@ def run(
     allow_dirty: bool = False,
     verbose: bool = False,
     projects: list[str] | None = None,
+    files: list[Path] | None = None,
 ) -> GenResult:
     """Top-level orchestration entry point."""
     root = root.resolve()
@@ -343,7 +352,7 @@ def run(
             "git working tree is dirty. Commit/stash first or pass --allow-dirty."
         )
 
-    targets = collect_targets(root, limit, projects=projects)
+    targets = collect_targets(root, limit, projects=projects, files=files)
     result.candidates = len(targets)
     seen_files = {t.file for t in targets}
     result.scanned_files = len(seen_files)

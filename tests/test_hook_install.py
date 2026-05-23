@@ -92,3 +92,11 @@ def test_uninstall_no_hook_file(tmp_repo):
 def test_install_raises_on_non_git_dir(tmp_path):
     with pytest.raises(RuntimeError):
         hook_install.install(tmp_path)
+
+
+def test_hook_block_contains_autofill_optin_branch(tmp_repo):
+    hook_install.install(tmp_repo)
+    body = (tmp_repo / ".git" / "hooks" / "pre-commit").read_text(encoding="utf-8")
+    assert "CODENAV_HOOK_AUTOFILL" in body
+    assert "codenav.autofill" in body
+    assert "frontmatter gen --staged --apply" in body

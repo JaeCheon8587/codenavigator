@@ -14,7 +14,8 @@ _SENTINEL_START = "# codenav-frontmatter-hook-start"
 _SENTINEL_END = "# codenav-frontmatter-hook-end"
 
 HOOK_BLOCK = f"""{_SENTINEL_START}
-# codenav frontmatter validation. AI-free, fast, deterministic.
+# codenav frontmatter validation. AI-free by default, fast, deterministic.
+# Opt-in AI auto-fill: set env `CODENAV_HOOK_AUTOFILL=1` or git config `codenav.autofill true`.
 # Bypass with: git commit --no-verify
 codenav_exe=""
 if [ -x "./codenav.ps1" ]; then codenav_exe="./codenav.ps1"
@@ -29,6 +30,20 @@ if [ -n "$codenav_exe" ]; then
       echo "[codenav] frontmatter check failed. Fix issues or use 'git commit --no-verify' to bypass."
       exit $rc
     fi
+    autofill="${{CODENAV_HOOK_AUTOFILL:-}}"
+    if [ -z "$autofill" ]; then
+      autofill=$(git config --get codenav.autofill 2>/dev/null || true)
+    fi
+    case "$autofill" in
+      1|true|yes|on)
+        echo "[codenav] autofill: running frontmatter gen on staged .cs..."
+        if "$codenav_exe" frontmatter gen --staged --apply --allow-dirty; then
+          echo "$staged_cs" | xargs git add 2>/dev/null || true
+        else
+          echo "[codenav] autofill failed; commit will proceed with current content"
+        fi
+        ;;
+    esac
   fi
 fi
 {_SENTINEL_END}

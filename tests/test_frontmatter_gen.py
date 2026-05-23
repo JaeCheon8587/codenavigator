@@ -357,3 +357,81 @@ def test_collect_targets_default_limit_is_unlimited(tmp_repo):
             """)
     targets = frontmatter_gen.collect_targets(tmp_repo)
     assert len(targets) == 3
+
+
+def test_collect_targets_files_scope(tmp_repo):
+    _write(tmp_repo / "ProjA" / "ProjA.csproj", "<Project></Project>")
+    _write(tmp_repo / "ProjA" / "ClassA.cs", """
+        namespace ProjA {
+            public class ClassA { }
+        }
+        """)
+    _write(tmp_repo / "ProjB" / "ProjB.csproj", "<Project></Project>")
+    _write(tmp_repo / "ProjB" / "ClassB.cs", """
+        namespace ProjB {
+            public class ClassB { }
+        }
+        """)
+
+    targets = frontmatter_gen.collect_targets(
+        tmp_repo, files=[tmp_repo / "ProjA" / "ClassA.cs"]
+    )
+    names = {t.class_name for t in targets}
+    assert names == {"ClassA"}
+
+
+def test_collect_targets_files_overrides_projects(tmp_repo):
+    _write(tmp_repo / "ProjA" / "ProjA.csproj", "<Project></Project>")
+    _write(tmp_repo / "ProjA" / "ClassA.cs", """
+        namespace ProjA {
+            public class ClassA { }
+        }
+        """)
+    _write(tmp_repo / "ProjB" / "ProjB.csproj", "<Project></Project>")
+    _write(tmp_repo / "ProjB" / "ClassB.cs", """
+        namespace ProjB {
+            public class ClassB { }
+        }
+        """)
+
+    targets = frontmatter_gen.collect_targets(
+        tmp_repo,
+        projects=["ProjA.csproj"],
+        files=[tmp_repo / "ProjB" / "ClassB.cs"],
+    )
+    names = {t.class_name for t in targets}
+    assert names == {"ClassB"}
+
+
+def test_collect_targets_files_ignores_non_cs(tmp_repo):
+    _write(tmp_repo / "ProjA" / "ClassA.cs", """
+        namespace ProjA {
+            public class ClassA { }
+        }
+        """)
+    (tmp_repo / "ProjA" / "readme.txt").write_text("note")
+    targets = frontmatter_gen.collect_targets(
+        tmp_repo,
+        files=[
+            tmp_repo / "ProjA" / "ClassA.cs",
+            tmp_repo / "ProjA" / "readme.txt",
+        ],
+    )
+    assert len(targets) == 1
+    assert targets[0].class_name == "ClassA"
+
+
+def test_collect_targets_files_ignores_missing(tmp_repo):
+    _write(tmp_repo / "ProjA" / "ClassA.cs", """
+        namespace ProjA {
+            public class ClassA { }
+        }
+        """)
+    targets = frontmatter_gen.collect_targets(
+        tmp_repo,
+        files=[
+            tmp_repo / "ProjA" / "ClassA.cs",
+            tmp_repo / "ProjA" / "Missing.cs",
+        ],
+    )
+    assert len(targets) == 1

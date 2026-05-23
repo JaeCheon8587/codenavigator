@@ -105,6 +105,15 @@ def cmd_frontmatter_gen(args: argparse.Namespace) -> int:
         projects = [p.strip() for p in args.projects.split(",") if p.strip()]
         if not projects:
             projects = None
+    files: list[Path] | None = None
+    if getattr(args, "staged", False):
+        files = frontmatter_check.staged_cs_files(root)
+    if getattr(args, "files", None):
+        explicit = [
+            (root / f).resolve() if not Path(f).is_absolute() else Path(f)
+            for f in args.files
+        ]
+        files = (files or []) + explicit
     try:
         result = frontmatter_gen.run(
             root,
@@ -113,6 +122,7 @@ def cmd_frontmatter_gen(args: argparse.Namespace) -> int:
             allow_dirty=args.allow_dirty,
             verbose=args.verbose,
             projects=projects,
+            files=files,
         )
     except RuntimeError as exc:
         print(f"[codenav] {exc}", file=sys.stderr)
@@ -213,7 +223,18 @@ def main() -> None:
     fp_gen.add_argument(
         "--projects",
         metavar="CSV",
-        help="Comma-separated .csproj filenames to scope frontmatter generation (e.g. 'Foo.csproj,Bar.csproj'). Only .cs under matching csproj folders are considered.",
+        help="Comma-separated .csproj filenames to scope frontmatter generation (e.g. 'Foo.csproj,Bar.csproj'). Only .cs under matching csproj folders are considered. Ignored when --files or --staged is set.",
+    )
+    fp_gen.add_argument(
+        "--files",
+        nargs="+",
+        metavar="FILE",
+        help="Explicit .cs file list to process (overrides --projects).",
+    )
+    fp_gen.add_argument(
+        "--staged",
+        action="store_true",
+        help="Process only git-staged .cs files (overrides --projects, combinable with --files).",
     )
     fp_gen.add_argument("--verbose", action="store_true")
 

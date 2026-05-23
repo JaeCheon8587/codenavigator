@@ -1,5 +1,10 @@
 # Changelog
 
+## v1.0.6 — 2026-05-23
+
+- feat(frontmatter-gen): `--files FILE [FILE ...]` and `--staged` scope flags. `--files` is explicit list; `--staged` reads `git diff --cached`. Both override `--projects` so tight per-commit autofill workflows are possible. 4 new pytest cases.
+- feat(install-hook): opt-in autofill branch in installed pre-commit. Enable via env `CODENAV_HOOK_AUTOFILL=1` or git config `codenav.autofill true`. When enabled, after `frontmatter check --staged` succeeds, hook runs `frontmatter gen --staged --apply` and re-stages modified files. Disabled by default — preserves AI-free fast hook for users who haven't opted in. Bypass remains `git commit --no-verify`.
+
 ## v1.0.5 — 2026-05-23
 
 - feat(frontmatter): `codenav frontmatter check` — AI-free static validation. Flags missing frontmatter (WARN), empty description, malformed `tags:`, unterminated `// ---` blocks (FAIL). Supports `--staged` (git index), `--files`, `--strict` (exit 1 on WARN).
